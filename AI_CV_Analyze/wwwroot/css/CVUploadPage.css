@@ -1,0 +1,158 @@
+﻿/* Animation keyframes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes blob {
+    0% {
+        transform: translate(0px, 0px) scale(1);
+    }
+
+    33% {
+        transform: translate(30px, -50px) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-20px, 20px) scale(0.9);
+    }
+
+    100% {
+        transform: translate(0px, 0px) scale(1);
+    }
+}
+
+@keyframes progress {
+    0% {
+        width: 0%;
+    }
+
+    50% {
+        width: 70%;
+    }
+
+    100% {
+        width: 100%;
+    }
+}
+
+/* Animation classes */
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-blob {
+    animation: blob 8s infinite ease-in-out;
+}
+
+.animate-progress {
+    animation: progress 2s infinite ease-in-out;
+}
+
+.animation-delay-100 {
+    animation-delay: 0.1s;
+}
+
+.animation-delay-200 {
+    animation-delay: 0.2s;
+}
+
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+
+/* Dropzone styles */
+.dropzone {
+    border: 2px dashed #3b82f6;
+    border-radius: 16px;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background-color: rgba(59, 130, 246, 0.03);
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 2rem;
+}
+
+    .dropzone.active {
+        border-color: #6366f1;
+        background-color: rgba(59, 130, 246, 0.08);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+    }
+
+    .dropzone:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 30px rgba(59, 130, 246, 0.2);
+        border-color: #6366f1;
+    }
+
+/* File card styles */
+.file-card {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-left: 4px solid #3b82f6;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+    .file-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+    }
+
+/* Button hover effects */
+.btn-primary:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .dropzone {
+        min-height: 220px;
+        padding: 1.5rem;
+    }
+
+    #upload-instructions .upload-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Fix for overlapping sections */
+#upload-instructions,
+#analyze-section {
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+#analyze-section {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}

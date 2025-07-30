@@ -1,0 +1,1010 @@
+@model AI_CV_Analyze.Models.ResumeAnalysisResult
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Kết Quả Phân Tích CV";
+    Layout = "~/Views/Shared/_LayoutAnalysisResult.cshtml";
+    var analysis = Model.Resume?.ResumeAnalysis;
+    // Sử dụng điểm từ ViewBag nếu có (ưu tiên cho cả guest)
+    int layoutScore = ViewBag.LayoutScore ?? (analysis?.LayoutScore ?? 0);
+    int skillScore = ViewBag.SkillScore ?? (analysis?.SkillScore ?? 0);
+    int experienceScore = ViewBag.ExperienceScore ?? (analysis?.ExperienceScore ?? 0);
+    int educationScore = ViewBag.EducationScore ?? (analysis?.EducationScore ?? 0);
+    int keywordScore = ViewBag.KeywordScore ?? (analysis?.KeywordScore ?? 0);
+    int formatScore = ViewBag.FormatScore ?? (analysis?.FormatScore ?? 0);
+    int totalScore = ViewBag.TotalScore ?? (layoutScore + skillScore + experienceScore + educationScore + keywordScore + formatScore);
+    bool hasScore = (layoutScore > 0 || skillScore > 0 || experienceScore > 0 || educationScore > 0 || keywordScore > 0 || formatScore > 0);
+    // Nếu là khách, cho phép JS render điểm tạm thời
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header Section with floating animation -->
+    <div class="text-center mb-8 animate-fade-in-up">
+        @if (Model != null && !string.IsNullOrEmpty(Model.Content))
+        {
+            <div class="inline-flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full mb-4 shadow-md float-animation animate-fade-in-up animation-delay-200">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span>Analysis complete</span>
+        </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2 animate-fade-in-up animation-delay-300">CV Analysis Results</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto animate-fade-in-up animation-delay-400">The AI system has analyzed your CV and provided detailed evaluations</p>
+
+            <!-- File info cards with enhanced hover -->
+            <div class="flex flex-wrap justify-center gap-3 mt-6 animate-fade-in-up animation-delay-500">
+                <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 flex items-center hover:shadow-md hover:border-blue-200 transition-all">
+                <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                <span class="text-sm font-medium text-gray-700 truncate max-w-xs">@Model.FileName</span>
+            </div>
+                <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 flex items-center hover:shadow-md hover:border-blue-200 transition-all">
+                <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+                <span class="text-sm font-medium text-gray-700">@Model.AnalysisDate.ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+                <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 flex items-center hover:shadow-md hover:border-blue-200 transition-all">
+                <i class="fas fa-robot text-blue-500 mr-2"></i>
+                <span class="text-sm font-medium text-gray-700">AI Engine 2.0</span>
+            </div>
+        </div>
+        }
+        else
+        {
+            <div class="inline-flex items-center justify-center bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-6 py-2 rounded-full mb-4 shadow-md pulse-animation">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <span>No CV Analysis Available</span>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">CV Analysis Results</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">Please upload a CV to get started with the analysis</p>
+
+            <div class="mt-6">
+                <a asp-controller="CVAnalysis" asp-action="Index" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all transform hover:-translate-y-0.5 hover:shadow-lg btn-hover-effect">
+                    <i class="fas fa-upload mr-2 transition-transform duration-300 group-hover:translate-y-0.5"></i>
+                    Upload CV for Analysis
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- 3-COLUMN GRID LAYOUT -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 animate-fade-in-up animation-delay-600">
+        <!-- LEFT COLUMN: CV Scoring + Job Recommendation -->
+        <div class="space-y-6 order-1 md:order-1 md:col-span-3 animate-fade-in-left animation-delay-700">
+            <!-- Enhanced CV Scoring Block with Advanced UI -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6 hover:shadow-xl transition-all duration-300 animate-fade-in-up animation-delay-100" id="cv-score-block">
+                <!-- Enhanced Header with Gradient Background -->
+                <div class="bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 px-4 py-4 border-b border-blue-400 relative overflow-hidden">
+                    <!-- Animated background pattern -->
+                    <div class="absolute inset-0 opacity-10">
+                        <div class="absolute top-0 left-0 w-16 h-16 bg-white rounded-full transform -translate-x-8 -translate-y-8"></div>
+                        <div class="absolute top-8 right-8 w-12 h-12 bg-white rounded-full"></div>
+                        <div class="absolute bottom-0 left-1/2 w-8 h-8 bg-white rounded-full transform -translate-x-4 translate-y-4"></div>
+                </div>
+                    
+                    <div class="relative flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="relative">
+                                <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-star text-white text-lg"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-sparkles text-white text-xs"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-white mb-0.5">CV Scoring (AI)</h2>
+                                <p class="text-blue-100 text-xs">Intelligent evaluation system</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:block">
+                            <div class="w-7 h-7 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-white text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <!-- Hidden input for CV content -->
+                    <input type="hidden" name="Content" value="@(Model.Content ?? (ViewBag.CVContent ?? ""))" />
+                    
+                    <!-- Enhanced Scoring Button -->
+                    <button id="btnScoreCV" class="group relative w-full flex justify-center items-center px-4 py-3 mb-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 hover:from-blue-600 hover:via-purple-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg btn-hover-effect" data-resumeid="@Model.ResumeId" style="display: @(hasScore ? "none" : "block")">
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <span class="relative flex items-center">
+                            <i class="fas fa-magic mr-2 text-base group-hover:animate-spin transition-transform duration-300"></i> 
+                            Start AI Scoring
+                        </span>
+                    </button>
+
+                    <!-- Error State - Moved right after button -->
+                    <div id="score-error" style="display:none" class="mb-4">
+                        <!-- Error content will be dynamically inserted by JavaScript -->
+                    </div>
+
+                    <!-- Enhanced Score Table with Progress Bars -->
+                    <div id="cv-score-table" style="display: @(hasScore ? "block" : "none")" class="space-y-3">
+                        <!-- Layout and Presentation -->
+                        <div class="score-item bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100 hover:border-blue-200 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-sm" style="font-size: 16px;">🎨</span>
+                    </div>
+                                    <span class="font-medium text-gray-800 text-sm">Layout</span>
+                        </div>
+                                <span class="font-bold text-blue-600 text-base" id="score-layout">@layoutScore / 10</span>
+                    </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-1000" style="width: @(layoutScore * 10)%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="score-item bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-100 hover:border-green-200 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-sm" style="font-size: 16px;">🔧</span>
+                                    </div>
+                                    <span class="font-medium text-gray-800 text-sm">Skills</span>
+                                </div>
+                                <span class="font-bold text-green-600 text-base" id="score-skill">@skillScore / 10</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full transition-all duration-1000" style="width: @(skillScore * 10)%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Experience/Project -->
+                        <div class="score-item bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg p-3 border border-purple-100 hover:border-purple-200 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-sm" style="font-size: 16px;">💼</span>
+                                    </div>
+                                    <span class="font-medium text-gray-800 text-sm">Experience</span>
+                                </div>
+                                <span class="font-bold text-purple-600 text-base" id="score-experience">@experienceScore / 10</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-full rounded-full transition-all duration-1000" style="width: @(experienceScore * 10)%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Education -->
+                        <div class="score-item bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-3 border border-orange-100 hover:border-orange-200 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-sm" style="font-size: 16px;">🎓</span>
+                                    </div>
+                                    <span class="font-medium text-gray-800 text-sm">Education</span>
+                                </div>
+                                <span class="font-bold text-orange-600 text-base" id="score-education">@educationScore / 10</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-orange-500 to-orange-600 h-full rounded-full transition-all duration-1000" style="width: @(educationScore * 10)%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Keywords -->
+                        <div class="score-item bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg p-3 border border-pink-100 hover:border-pink-200 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-sm" style="font-size: 16px;">🔑</span>
+                                    </div>
+                                    <span class="font-medium text-gray-800 text-sm">Keywords</span>
+                                </div>
+                                <span class="font-bold text-pink-600 text-base" id="score-keyword">@keywordScore / 10</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-pink-500 to-pink-600 h-full rounded-full transition-all duration-1000" style="width: @(keywordScore * 10)%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Format -->
+                        <div class="score-item bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-3 border border-teal-100 hover:border-teal-200 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-sm" style="font-size: 16px;">📄</span>
+                                    </div>
+                                    <span class="font-medium text-gray-800 text-sm">Format</span>
+                                </div>
+                                <span class="font-bold text-teal-600 text-base" id="score-format">@formatScore / 10</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-teal-500 to-teal-600 h-full rounded-full transition-all duration-1000" style="width: @(formatScore * 10)%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Total Score - Compact Design -->
+                        <div class="score-item bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border-2 border-indigo-200 hover:border-indigo-300 transition-all duration-300">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-white text-sm">🏆</span>
+                                    </div>
+                                    <span class="font-bold text-gray-800">Total Score</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-indigo-600 text-xl" id="score-total">@totalScore / 60</div>
+                                    <div class="text-xs text-gray-500">
+                                        @{
+                                            var scorePercentage = totalScore * 100 / 60;
+                                            var scoreLevel = scorePercentage >= 80 ? "Excellent" : 
+                                                            scorePercentage >= 60 ? "Good" : 
+                                                            scorePercentage >= 40 ? "Average" : "Needs Improvement";
+                                        }
+                                        @scoreLevel
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-3 overflow-hidden">
+                                <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all duration-1000" style="width: @(totalScore * 100 / 60)%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Loading State -->
+                    <div id="score-loading" style="display:none" class="text-center py-6">
+                        <div class="relative w-16 h-16 mx-auto mb-4">
+                            <div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full animate-pulse"></div>
+                            <div class="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                                <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">AI is analyzing your CV...</h3>
+                        <p class="text-gray-600 text-sm">Evaluating all criteria with advanced algorithms</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Job Recommendation Block -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in-up animation-delay-200">
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 border-b border-blue-400">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div>
+                                <h2 class="text-xl font-bold text-white">Suitable Jobs</h2>
+                                <p class="text-blue-100 text-sm">AI-powered job matching based on your CV</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:block">
+                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-white text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              
+                <div class="p-6">
+                    <!-- Hidden fields to pass model data to JavaScript -->
+                    <input type="hidden" id="cvSkills" value="@Model.Skills" />
+                    <input type="hidden" id="cvExperience" value="@Model.Experience" />
+                    <input type="hidden" id="cvProject" value="@Model.Project" />
+                    <!-- Hidden field for job recommendations from session -->
+                    @if (ViewBag.JobRecommendations != null)
+                    {
+                        <input type="hidden" id="jobRecommendationsFromSession" value="@Html.Raw(Json.Serialize(ViewBag.JobRecommendations))" />
+                    }
+                    
+                    <!-- Initial State -->
+                    @if (ViewBag.JobRecommendations == null)
+                    {
+                        <div id="jobInitialState" class="text-center py-8">
+                            <div class="mb-8">
+                                <div class="relative w-20 h-20 mx-auto mb-6">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full animate-pulse"></div>
+                                    <div class="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                                        <i class="fas fa-search text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <div class="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-sparkles text-white text-xs"></i>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-3">Discover Your Perfect Job Match</h3>
+                                <p class="text-gray-600 mb-6 max-w-sm mx-auto">Our AI will analyze your CV and find the best job opportunities that match your skills and experience</p>
+                                <!-- Feature highlights - Compact Vertical Version -->
+                                <div class="flex flex-col gap-3 mb-6">
+                                    <div class="feature-card flex items-start p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                            <i class="fas fa-chart-line text-white text-xs"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-semibold text-gray-700">Smart Matching</p>
+                                            <p class="text-xs text-gray-500">AI-powered job matching</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-card flex items-start p-3 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg border border-indigo-200">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                            <i class="fas fa-lightbulb text-white text-xs"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-semibold text-gray-700">Skill Analysis</p>
+                                            <p class="text-xs text-gray-500">Deep skill assessment</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-card flex items-start p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                            <i class="fas fa-rocket text-white text-xs"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-semibold text-gray-700">Career Growth</p>
+                                            <p class="text-xs text-gray-500">Path to success</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="btnJobRecommend" type="button" class="group relative w-auto max-w-md mx-auto flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg btn-hover-effect">
+                                <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <span class="relative flex items-center">
+                                    <i class="fas fa-magic mr-2 text-sm group-hover:animate-spin"></i> 
+                                    Get Smart Recommendations
+                                </span>
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                    }
+
+                    <!-- Loading State -->
+                    <div id="jobLoadingState" class="text-center py-8" style="display: none;">
+                        <div class="mb-6">
+                            <div class="relative w-16 h-16 mx-auto mb-4">
+                                <div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full animate-pulse"></div>
+                                <div class="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                                    <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Analyzing Your Profile</h3>
+                            <p class="text-gray-600 mb-4">Our AI is finding the perfect job matches for you...</p>
+                            
+                            <!-- Progress steps -->
+                            <div class="space-y-2 mb-6">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                                    <span>Analyzing skills and experience</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <div class="w-2 h-2 bg-blue-500 rounded-full mr-3 animate-pulse"></div>
+                                    <span>Matching with job market</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-400">
+                                    <div class="w-2 h-2 bg-gray-300 rounded-full mr-3"></div>
+                                    <span>Generating recommendations</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results State -->
+                    <div id="jobRecommendResult" class="space-y-6" style="display: none;">
+                        <!-- Results will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Results State from Session (when page loads with existing data) -->
+                    @if (ViewBag.JobRecommendations != null)
+                    {
+                        <div id="jobRecommendResultFromSession" class="space-y-6">
+                            @{
+                                var jobResult = ViewBag.JobRecommendations as AI_CV_Analyze.Models.JobSuggestionResult;
+                                if (jobResult != null && !string.IsNullOrEmpty(jobResult.RecommendedJob))
+                                {
+                                    <div class="space-y-6">
+                                        <div class="text-center mb-6">
+                                            <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-check text-white text-2xl"></i>
+                                            </div>
+                                            <h3 class="text-xl font-bold text-gray-800 mb-2">Perfect Match Found!</h3>
+                                            <p class="text-gray-600">Based on your skills and experience, we recommend:</p>
+                                        </div>
+
+                                        <!-- Job Card -->
+                                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                                            <div class="flex items-start mb-4">
+                                                <div class="flex items-center">
+                                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-4">
+                                                        <i class="fas fa-briefcase text-white text-lg"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="text-xl font-bold text-gray-900 mb-1">@jobResult.RecommendedJob</h4>
+                                                        <p class="text-sm text-gray-600">Recommended for you</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            @if (jobResult.MissingSkills != null && jobResult.MissingSkills.Any())
+                                            {
+                                                <!-- Skills to Improve -->
+                                                <div class="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4">
+                                                    <div class="flex items-center mb-3">
+                                                        <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                                                            <i class="fas fa-lightbulb text-white text-sm"></i>
+                                                        </div>
+                                                        <h5 class="text-sm font-semibold text-yellow-800">Skills to Improve</h5>
+                                                    </div>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        @foreach (var skill in jobResult.MissingSkills)
+                                                        {
+                                                            <span class="bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium border border-yellow-200 hover:from-yellow-200 hover:to-orange-200 transition-all duration-200">
+                                                                @skill
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        <div class="flex flex-col sm:flex-row gap-2">
+                                            <a href="/CVAnalysis/JobPrediction" class="group flex-1 flex justify-center items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-md">
+                                                <i class="fas fa-search mr-2 group-hover:animate-bounce"></i>View More Jobs
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                                else if (jobResult != null && !string.IsNullOrEmpty(jobResult.ImprovementPlan))
+                                {
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                                        <div class="flex items-start">
+                                            <i class="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-3"></i>
+                                            <div>
+                                                <h4 class="text-sm font-semibold text-yellow-800 mb-2">Improvement Needed</h4>
+                                                <p class="text-sm text-yellow-700">@jobResult.ImprovementPlan</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-8">
+                                        <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-info-circle text-gray-400 text-xl"></i>
+                                        </div>
+                                        <h4 class="text-lg font-semibold text-gray-800 mb-2">No Recommendations Found</h4>
+                                        <p class="text-sm text-gray-600">We couldn't find suitable job matches for your current profile.</p>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+
+                    <!-- Error State -->
+                    <div id="jobErrorState" class="text-center py-8" style="display: none;">
+                        <div class="mb-6">
+                            <div class="relative w-16 h-16 mx-auto mb-4">
+                                <div class="absolute inset-0 bg-gradient-to-br from-red-400 to-pink-500 rounded-full animate-pulse"></div>
+                                <div class="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Oops! Something went wrong</h3>
+                            <p class="text-gray-600 mb-6">We couldn't generate recommendations right now. Please try again.</p>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MIDDLE COLUMN: Edit suggestions + content -->
+        <div class="order-2 md:order-2 md:col-span-6 flex flex-col items-center animate-fade-in-up animation-delay-800">
+            <div class="w-full max-w-2xl mx-auto">
+                <!-- AI Recommendation with pulse effect -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 hover:shadow-md transition-all animate-fade-in-up animation-delay-300">
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-robot text-blue-500 mr-3"></i> AI Recommendation
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg mb-6 hover:shadow-sm transition-all">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-lightbulb text-yellow-500 mt-1"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800">Click to view detailed edit suggestions from AI</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit suggestions button with enhanced hover -->
+                        @if (string.IsNullOrEmpty(ViewBag.Suggestions))
+                        {
+                        <form id="editSuggestionsForm" method="post" asp-action="GetEditSuggestions" class="space-y-4 mb-6">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="Content" value="@(Model.Content ?? (ViewBag.CVContent ?? ""))" />
+                                <button type="submit" class="w-auto max-w-md mx-auto flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:-translate-y-0.5 hover:shadow-lg btn-hover-effect pulse-animation">
+                                <i class="fas fa-magic mr-2"></i> Get CV Edit Suggestions from AI
+                            </button>
+                        </form>
+                        }
+                    </div>
+                </div>
+
+                <!-- Error Message with animation -->
+                @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+                {
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg mb-8 animate__animated animate__shakeX">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    @ViewBag.ErrorMessage
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Suggestions Card with enhanced styling -->
+                <div class="suggestion-card bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all animate-fade-in-up animation-delay-400">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center">
+                            <div class="ai-icon bg-blue-50 text-blue-600 p-3 rounded-xl mr-4 hover:bg-blue-100 transition-all">
+                            <i class="fas fa-robot text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800">Edit suggestions from AI</h2>
+                        </div>
+                        <!-- Copy button with hover effect -->
+                        @if (!string.IsNullOrEmpty(ViewBag.Suggestions))
+                        {
+                            <button id="copy-btn" class="copy-btn flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all transform hover:-translate-y-0.5 btn-hover-effect">
+                                <i class="far fa-copy mr-2"></i> Copy
+                            </button>
+                        }
+                    </div>
+
+                    <div class="suggestion-content bg-gray-50 p-6 rounded-lg border-l-4 border-yellow-400 hover:border-blue-400 transition-all">
+                        <!-- Format sections with proper spacing and styling -->
+                        <div class="ai-suggestion-text space-y-6">
+                            @if (!string.IsNullOrEmpty(ViewBag.Suggestions))
+                            {
+                                var suggestionsText = ViewBag.Suggestions?.ToString() ?? "";
+                                var sections = suggestionsText.Split(new[] { "##" }, StringSplitOptions.RemoveEmptyEntries);
+                                foreach (var section in sections)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(section))
+                                    {
+                                        var parts = section.Trim().Split(new[] { '\n' }, 2);
+                                        if (parts.Length > 0)
+                                        {
+                                            <div class="section-block hover:bg-blue-50 p-2 rounded-lg transition-all">
+                                                @if (parts.Length > 1)
+                                                {
+                                                    <h3 class="text-xl font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200 hover:text-blue-600 transition-colors">@(parts[0]?.Trim() ?? "")</h3>
+                                                    <div class="section-content text-gray-700 leading-relaxed">
+                                                        @{
+                                                            var content = parts[1]?.Trim() ?? "";
+                                                            var lines = content.Split('\n');
+                                                            var filteredLines = new List<string>();
+                                                            foreach (var line in lines)
+                                                            {
+                                                                var trimmedLine = line.Trim();
+                                                                if (!string.IsNullOrWhiteSpace(trimmedLine) &&
+                                                                trimmedLine != "---" &&
+                                                                trimmedLine != "--- " &&
+                                                                trimmedLine != " ---" &&
+                                                                trimmedLine != " --- ")
+                                                                {
+                                                                    filteredLines.Add(line);
+                                                                }
+                                                            }
+                                                            var filteredContent = string.Join("\n", filteredLines);
+                                                        }
+                                                        @Html.Raw(filteredContent.Replace("\n", "<br>"))
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="section-content text-gray-700 leading-relaxed">
+                                                        @{
+                                                            var content = parts[0]?.Trim() ?? "";
+                                                            var lines = content.Split('\n');
+                                                            var filteredLines = new List<string>();
+                                                            foreach (var line in lines)
+                                                            {
+                                                                var trimmedLine = line.Trim();
+                                                                if (!string.IsNullOrWhiteSpace(trimmedLine) &&
+                                                                trimmedLine != "---" &&
+                                                                trimmedLine != "--- " &&
+                                                                trimmedLine != " ---" &&
+                                                                trimmedLine != " --- ")
+                                                                {
+                                                                    filteredLines.Add(line);
+                                                                }
+                                                            }
+                                                            var filteredContent = string.Join("\n", filteredLines);
+                                                        }
+                                                        @Html.Raw(filteredContent.Replace("\n", "<br>"))
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-center py-8">
+                                    <i class="fas fa-info-circle text-blue-500 text-4xl mb-4 float-animation"></i>
+                                    <p class="text-gray-600 text-lg">No AI edit suggestions available</p>
+                                    <p class="text-gray-500 text-sm mt-2">Please use the "Get CV Edit Suggestions from AI" button above to receive suggestions</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (ViewBag.Suggestions != null && ViewBag.CVContent != null)
+                    {
+                        <form id="generateFinalCVForm" method="post" asp-action="GenerateFinalCV" class="mt-6">
+                            <input type="hidden" name="cvContent" value="@ViewBag.CVContent" />
+                            <input type="hidden" name="suggestions" value="@ViewBag.Suggestions" />
+                            <button type="submit" class="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all transform hover:-translate-y-0.5 hover:shadow-lg btn-hover-effect">
+                                <i class="fas fa-file-export mr-2"></i> Generate Complete CV Based on Suggestions
+                            </button>
+                        </form>
+                    }
+
+                    <div class="mt-8 flex flex-col sm:flex-row justify-between gap-4">
+                        @* <a href="@Url.Action("AnalysisResult", "CVAnalysis")" class="btn-secondary text-gray-700 font-medium py-3 px-6 rounded-lg inline-flex items-center justify-center hover:bg-gray-100 hover:shadow-sm transition-all transform hover:-translate-y-0.5">
+                            <i class="fas fa-arrow-left mr-3 transition-transform duration-300 group-hover:-translate-x-1"></i> Analysis Result
+                        </a> *@
+                        <a href="@Url.Action("Index", "Home")" class="btn-primary bg-blue-600 text-white font-medium py-3 px-6 rounded-lg inline-flex items-center justify-center hover:bg-blue-700 hover:shadow-lg transition-all transform hover:-translate-y-0.5 btn-hover-effect">
+                            <i class="fas fa-home mr-3"></i> Home
+                        </a>
+                        <a asp-controller="CVAnalysis" asp-action="JobPrediction" class="btn-secondary flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-sm transition-all duration-300 transform hover:-translate-y-0.5">
+                            <i class="fas fa-arrow-right mr-2 transition-transform duration-300 group-hover:translate-x-1"></i> Job suggestions
+                        </a>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="space-y-6 order-3 md:order-3 md:col-span-3 animate-fade-in-right animation-delay-900">
+            @{
+                var hasOverall = !string.IsNullOrEmpty(Model.OverallAnalysis);
+                var overviewText = hasOverall ? Model.OverallAnalysis.Replace("\n", " ").Replace("<br>", " ") : "";
+                var isLongOverview = hasOverall && overviewText.Length > 150;
+                var overviewSummary = isLongOverview ? overviewText.Substring(0, 150) + "..." : overviewText;
+                
+                var hasEducation = !string.IsNullOrEmpty(Model.Education) || !string.IsNullOrEmpty(Model.Course) || !string.IsNullOrEmpty(Model.Certificate);
+                var educationText = "";
+                if (hasEducation)
+                {
+                    if (!string.IsNullOrEmpty(Model.Education)) educationText += Model.Education + "\n";
+                    if (!string.IsNullOrEmpty(Model.Course)) educationText += Model.Course + "\n";
+                    if (!string.IsNullOrEmpty(Model.Certificate)) educationText += Model.Certificate;
+                }
+                var isLongEducation = hasEducation && educationText.Length > 150;
+                var educationSummary = isLongEducation ? educationText.Substring(0, 150) + "..." : educationText;
+                
+                var hasAchievement = !string.IsNullOrEmpty(Model.Achievement);
+                var achievementText = hasAchievement ? Model.Achievement.Replace("\n", " ").Replace("\r\n", " ") : "";
+                var isLongAchievement = hasAchievement && achievementText.Length > 150;
+                var achievementSummary = isLongAchievement ? achievementText.Substring(0, 150) + "..." : achievementText;
+                
+                var hasExperience = !string.IsNullOrEmpty(Model.Experience);
+                var experienceText = hasExperience ? Model.Experience.Replace("\n", " ").Replace("\r\n", " ") : "";
+                var isLongExperience = hasExperience && experienceText.Length > 150;
+                var experienceSummary = isLongExperience ? experienceText.Substring(0, 150) + "..." : experienceText;
+                
+                var hasProject = !string.IsNullOrEmpty(Model.Project);
+                var projectText = hasProject ? Model.Project.Replace("\n", " ").Replace("<br>", " ") : "";
+                var isLongProject = hasProject && projectText.Length > 150;
+                var projectSummary = isLongProject ? projectText.Substring(0, 150) + "..." : projectText;
+            }
+            
+            @if (hasOverall)
+            {
+                <div class="content-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 animate-fade-in-up animation-delay-100"
+                     data-full-content="@Html.Raw(Model.OverallAnalysis.Replace("\n", "<br>"))" 
+                     data-title="Profile Overview">
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-chart-pie text-blue-500 mr-3 hover:text-blue-600 transition-colors"></i> Profile Overview
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="content-summary prose max-w-none text-gray-700">
+                            @Html.Raw(overviewSummary)
+                        </div>
+                        @if (isLongOverview)
+                        {
+                            <button class="show-more-btn text-blue-600 hover:text-blue-800 font-medium mt-3 text-sm transition-colors hover:underline">
+                                <i class="fas fa-chevron-down mr-1 transition-transform duration-300 group-hover:translate-y-1"></i>View Details
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Name) || !string.IsNullOrEmpty(Model.Email))
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all animate-fade-in-up animation-delay-200">
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-user text-blue-500 mr-3 hover:text-blue-600 transition-colors"></i> Personal Information
+                        </h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        @if (!string.IsNullOrEmpty(Model.Name))
+                        {
+                            <div class="hover:bg-blue-50 p-2 rounded-lg transition-colors">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-2 hover:text-blue-600 transition-colors">Full Name</h3>
+                                <div class="text-gray-700">
+                                    @Model.Name
+                    </div>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Email))
+            {
+                            <div class="hover:bg-blue-50 p-2 rounded-lg transition-colors">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-2 hover:text-blue-600 transition-colors">Email</h3>
+                                <div class="text-gray-700">
+                                    @Model.Email
+                                </div>
+                    </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Skills) || !string.IsNullOrEmpty(Model.LanguageProficiency))
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all animate-fade-in-up animation-delay-300">
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-tools text-blue-500 mr-3 hover:text-blue-600 transition-colors"></i> Skills & Languages
+                        </h2>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        @if (!string.IsNullOrEmpty(Model.Skills))
+                        {
+                            <div class="hover:bg-blue-50 p-3 rounded-lg transition-colors">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-3 hover:text-blue-600 transition-colors">Technical Skills</h3>
+                                <div class="text-gray-700">
+                                    @Model.Skills
+                                </div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.LanguageProficiency))
+                        {
+                            <div class="hover:bg-blue-50 p-3 rounded-lg transition-colors">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-3 hover:text-blue-600 transition-colors">Languages</h3>
+                                <div class="text-gray-700">
+                                    @Model.LanguageProficiency
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (hasEducation)
+            {
+                <div class="content-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 animate-fade-in-up animation-delay-400"
+                     data-full-content="@Html.Raw(educationText.Replace("\n", "<br>"))"
+                     data-title="Education & Qualifications">
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-graduation-cap text-blue-500 mr-3 hover:text-blue-600 transition-colors"></i> Education & Qualifications
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="content-summary text-gray-700">
+                            @Html.Raw(educationSummary.Replace("\n", "<br>"))
+                        </div>
+                        @if (isLongEducation)
+                        {
+                            <button class="show-more-btn text-blue-600 hover:text-blue-800 font-medium mt-3 text-sm transition-colors hover:underline">
+                                <i class="fas fa-chevron-down mr-1 transition-transform duration-300 group-hover:translate-y-1"></i>View Details
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (hasAchievement)
+            {
+                <div class="content-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 animate-fade-in-up animation-delay-500"
+                     data-full-content="@Html.Raw(Model.Achievement.Replace("\n", "<br>"))"
+                     data-title="Achievements">
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-trophy text-blue-500 mr-3 hover:text-blue-600 transition-colors"></i> Achievements
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="content-summary text-gray-700">
+                            @achievementSummary
+                        </div>
+                        @if (isLongAchievement)
+                        {
+                            <button class="show-more-btn text-blue-600 hover:text-blue-800 font-medium mt-3 text-sm transition-colors hover:underline">
+                                <i class="fas fa-chevron-down mr-1 transition-transform duration-300 group-hover:translate-y-1"></i>View Details
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (hasExperience)
+            {
+                <div class="content-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 animate-fade-in-up animation-delay-600"
+                     data-full-content="@Html.Raw(Model.Experience.Replace("\n", "<br>"))"
+                     data-title="Experience">
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-briefcase text-blue-500 mr-3 hover:text-blue-600 transition-colors"></i> Experience
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="content-summary text-gray-700">
+                            @experienceSummary
+                        </div>
+                        @if (isLongExperience)
+                        {
+                            <button class="show-more-btn text-blue-600 hover:text-blue-800 font-medium mt-3 text-sm transition-colors hover:underline">
+                                <i class="fas fa-chevron-down mr-1 transition-transform duration-300 group-hover:translate-y-1"></i>View Details
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (hasProject)
+            {
+                <div class="content-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 animate-fade-in-up animation-delay-700"
+                     data-full-content="@Html.Raw(Model.Project.Replace("\n", "<br>"))" 
+                     data-title="Projects">
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-briefcase text-blue-500 mr-3 hover:text-blue-600 transition-colors"></i> Projects
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="content-summary text-gray-700">
+                            @projectSummary
+                        </div>
+                        @if (isLongProject)
+                        {
+                            <button class="show-more-btn text-blue-600 hover:text-blue-800 font-medium mt-3 text-sm transition-colors hover:underline">
+                                <i class="fas fa-chevron-down mr-1 transition-transform duration-300 group-hover:translate-y-1"></i>View Details
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Action Buttons with enhanced effects -->
+    <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up animation-delay-1000">
+        <a asp-action="Index" class="w-full sm:w-auto flex justify-center items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:-translate-y-0.5 hover:shadow-lg btn-hover-effect">
+            <i class="fas fa-redo mr-2"></i> Analyze Another CV
+        </a>
+        <button id="shareResultBtn" class="w-full sm:w-auto flex justify-center items-center px-6 py-3 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:-translate-y-0.5">
+            <i class="fas fa-share-alt mr-2"></i> Share Your Results
+        </button>
+    </div>
+</div>
+
+<!-- Enhanced Loading Modal with Progress Animation -->
+<div id="loadingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center animate-fade-in-up w-80 max-w-[90vw] animate-fade-in-up">
+        <!-- Enhanced spinner with gradient -->
+        <div id="loadingSpinner" class="mb-6 relative w-16 h-16">
+            <div class="enhanced-spinner absolute inset-0 rounded-full"></div>
+            <div class="absolute inset-1 rounded-full bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+                <i class="fas fa-file-alt text-blue-500 text-xl"></i>
+            </div>
+        </div>
+
+        <!-- Progress text with animation -->
+        <div id="loadingText" class="font-semibold text-lg text-center mb-4">
+            <div class="text-gray-800">Analyzing your CV...</div>
+            <div class="text-sm text-gray-500 mt-1 animate-pulse">This may take a few moments</div>
+        </div>
+
+        <!-- Enhanced progress bar with gradient -->
+        <div class="w-full bg-gray-200 rounded-full h-2 mb-6 overflow-hidden">
+            <div id="progressBar" class="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 h-full rounded-full animate-progress"></div>
+        </div>
+
+        <!-- Cancel button with enhanced styling -->
+        <div class="mt-2">
+            <button type="button" id="cancelAnalyzeBtn" class="px-5 py-2 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-lg hover:from-gray-200 hover:to-gray-300 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                Cancel Analysis
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Loading Modal for Generate Complete CV with enhanced animation -->
+<div id="generateCVLoadingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center animate-fade-in-up w-80 max-w-[90vw]">
+        <div class="mb-4 relative w-20 h-20">
+            <div class="enhanced-spinner absolute inset-0 rounded-full"></div>
+            <div class="absolute inset-1 rounded-full bg-gradient-to-br from-green-50 to-white flex items-center justify-center">
+                <i class="fas fa-file-export text-green-500 text-2xl"></i>
+            </div>
+        </div>
+        <div class="font-semibold text-lg text-center">
+            AI system is generating your complete CV. Please wait a moment...
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-1.5 mt-6 overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 h-full rounded-full animate-progress"></div>
+        </div>
+        <!-- Cancel button -->
+        <div class="mt-4">
+            <button type="button" id="cancelGenerateCVBtn" class="px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-lg hover:from-gray-200 hover:to-gray-300 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                Cancel Generation
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Share Modal -->
+<div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4 animate-fade-in-up animation-delay-100">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-900">Share Your Results</h3>
+            <button id="closeShareModal" class="text-gray-400 hover:text-gray-500 transition-colors transform hover:rotate-90">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label for="shareLink" class="block text-sm font-medium text-gray-700 mb-1">Link</label>
+                <div class="flex">
+                    <input type="text" id="shareLink" readonly value="@Context.Request.Scheme://@Context.Request.Host@Context.Request.Path" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <button id="copyShareLink" class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-lg bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <i class="fas fa-copy mr-1"></i>Copy
+                    </button>
+                </div>
+                <div id="copySuccess" class="text-green-600 text-sm mt-1 hidden">
+                    <i class="fas fa-check mr-1"></i> Link copied to clipboard!
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Share via</label>
+                <div class="flex space-x-3">
+                    <a href="#" class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-all transform hover:-translate-y-1 hover:shadow-md">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-blue-400 text-white flex items-center justify-center hover:bg-blue-500 transition-all transform hover:-translate-y-1 hover:shadow-md">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition-all transform hover:-translate-y-1 hover:shadow-md">
+                        <i class="fab fa-google"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-900 transition-all transform hover:-translate-y-1 hover:shadow-md">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Content Detail Modal -->
+<div id="contentDetailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto custom-scrollbar animate-fade-in-up animation-delay-200">
+        <div class="flex justify-between items-center mb-4 sticky top-0 bg-white pb-4 pt-2">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-900"></h3>
+            <button id="closeContentModal" class="text-gray-400 hover:text-gray-500 transition-colors transform hover:rotate-90">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="modalContent" class="prose max-w-none text-gray-700">
+        </div>
+    </div>
+</div>
