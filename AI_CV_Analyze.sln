@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36119.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI_CV_Analyze", "AI_CV_Analyze\AI_CV_Analyze.csproj", "{BDC2FE13-7066-4C40-8D43-BBB7B081B485}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI_CV_Analyze.Tests", "AI_CV_Analyze.Tests\AI_CV_Analyze.Tests.csproj", "{9F4C5E8A-2B1D-4F6E-9C3A-7D5E2F1A8B9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{BDC2FE13-7066-4C40-8D43-BBB7B081B485}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDC2FE13-7066-4C40-8D43-BBB7B081B485}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDC2FE13-7066-4C40-8D43-BBB7B081B485}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F4C5E8A-2B1D-4F6E-9C3A-7D5E2F1A8B9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F4C5E8A-2B1D-4F6E-9C3A-7D5E2F1A8B9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F4C5E8A-2B1D-4F6E-9C3A-7D5E2F1A8B9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F4C5E8A-2B1D-4F6E-9C3A-7D5E2F1A8B9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
